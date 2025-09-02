@@ -112,9 +112,12 @@ export class SupabaseStorage implements IStorage {
       .from('jobs')
       .select('*')
       .eq('user_id', userId)
-      .order('date_found', { ascending: false });
+      .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.log('Error fetching jobs:', error);
+      return []; // Return empty array instead of throwing
+    }
     return (data || []) as Job[];
   }
 
