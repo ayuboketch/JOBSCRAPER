@@ -66,7 +66,7 @@ function TrackedCompaniesSection() {
       <Card>
         <CardContent className="p-6 text-center">
           <p className="text-muted-foreground mb-4">No companies tracked yet.</p>
-          <Button onClick={() => window.location.href = '/add-company'} data-testid="button-add-first-company">
+          <Button onClick={() => setLocation('/add-company')} data-testid="button-add-first-company">
             Add Your First Company
           </Button>
         </CardContent>
