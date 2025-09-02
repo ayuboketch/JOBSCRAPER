@@ -11,6 +11,7 @@ import { statsApi, jobsApi, companiesApi, Job, Stats, Company } from '@/lib/api'
 function TrackedCompaniesSection() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const { data: companies, isLoading: companiesLoading } = useQuery<Company[]>({
     queryKey: ['/api/companies']

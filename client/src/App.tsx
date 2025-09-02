@@ -1,6 +1,6 @@
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, Redirect, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -25,8 +25,20 @@ import NotFound from "@/pages/not-found";
 
 function AuthenticatedApp() {
   const { user, isLoading } = useAuth();
+  const [location, setLocation] = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'jobs' | 'settings'>('dashboard');
+  
+  // Update active tab based on current location
+  useEffect(() => {
+    if (location === '/' || location.startsWith('/job/') || location.startsWith('/add-company') || location.startsWith('/companies')) {
+      setActiveTab('dashboard');
+    } else if (location.startsWith('/jobs')) {
+      setActiveTab('jobs');
+    } else if (location.startsWith('/settings')) {
+      setActiveTab('settings');
+    }
+  }, [location]);
 
   if (isLoading) {
     return (
@@ -51,22 +63,20 @@ function AuthenticatedApp() {
   const handleNavigate = (view: string) => {
     setIsDrawerOpen(false);
     if (view === 'settings') {
-      setActiveTab('settings');
-      window.location.href = '/settings';
+      setLocation('/settings');
     }
   };
 
   const handleTabChange = (tab: 'dashboard' | 'jobs' | 'settings') => {
-    setActiveTab(tab);
     switch (tab) {
       case 'dashboard':
-        window.location.href = '/';
+        setLocation('/');
         break;
       case 'jobs':
-        window.location.href = '/jobs';
+        setLocation('/jobs');
         break;
       case 'settings':
-        window.location.href = '/settings';
+        setLocation('/settings');
         break;
     }
   };
@@ -75,7 +85,7 @@ function AuthenticatedApp() {
     <div className="min-h-screen flex flex-col bg-background">
       <TopNavigation 
         onMenuClick={() => setIsDrawerOpen(true)}
-        onLogoClick={() => window.location.href = '/'}
+        onLogoClick={() => setLocation('/')}
       />
       
       <SideDrawer
