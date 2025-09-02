@@ -2,6 +2,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useLocation, useSearch } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { JobCard } from '@/components/job-card';
 import { Job } from '@/lib/api';
 
