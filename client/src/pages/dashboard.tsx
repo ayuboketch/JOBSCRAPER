@@ -14,11 +14,15 @@ function TrackedCompaniesSection() {
   const [, setLocation] = useLocation();
 
   const { data: companies, isLoading: companiesLoading } = useQuery<Company[]>({
-    queryKey: ['/api/companies']
+    queryKey: ['/api/companies'],
+    retry: 3,
+    retryDelay: 1000
   });
 
   const { data: jobs } = useQuery<Job[]>({
-    queryKey: ['/api/jobs']
+    queryKey: ['/api/jobs'],
+    retry: 3,
+    retryDelay: 1000
   });
 
   const deleteCompanyMutation = useMutation({
@@ -111,12 +115,16 @@ export default function Dashboard() {
 
   const { data: stats, isLoading: statsLoading } = useQuery<Stats>({
     queryKey: ['/api/stats'],
-    enabled: !!user
+    enabled: !!user,
+    retry: 3,
+    retryDelay: 1000
   });
 
   const { data: jobs, isLoading: jobsLoading } = useQuery<Job[]>({
     queryKey: ['/api/jobs'],
-    enabled: !!user
+    enabled: !!user,
+    retry: 3,
+    retryDelay: 1000
   });
 
   const recentJobs = jobs?.filter(job => {
@@ -128,11 +136,17 @@ export default function Dashboard() {
     setLocation(`/job/${jobId}`);
   };
 
-  if (statsLoading || jobsLoading) {
+  // Show loading only for initial load
+  if ((statsLoading || jobsLoading) && !stats && !jobs) {
     return (
       <div className="p-4 pb-20">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Welcome back, {user?.fullName?.split(' ')[0] || 'there'}!
+          </h1>
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
         <div className="space-y-4">
-          <div className="h-8 bg-muted rounded animate-pulse"></div>
           <div className="h-20 bg-muted rounded animate-pulse"></div>
           <div className="grid grid-cols-2 gap-4">
             <div className="h-20 bg-muted rounded animate-pulse"></div>

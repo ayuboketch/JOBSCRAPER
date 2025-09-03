@@ -31,7 +31,7 @@ function AuthenticatedApp() {
   
   // Update active tab based on current location
   useEffect(() => {
-    if (location === '/dashboard') {
+    if (location === '/dashboard' || location === '/') {
       setActiveTab('dashboard');
     } else if (location.startsWith('/jobs')) {
       setActiveTab('jobs');
@@ -64,6 +64,8 @@ function AuthenticatedApp() {
     setIsDrawerOpen(false);
     if (view === 'settings') {
       setLocation('/settings');
+    } else if (view === 'dashboard') {
+      setLocation('/dashboard');
     }
   };
 

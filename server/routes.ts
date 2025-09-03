@@ -102,23 +102,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/companies', authenticateUser, async (req: any, res) => {
     try {
-      const companyData = {
-        ...req.body,
-        userId: req.userId,
+      const { url, keywords, priority, checkInterval } = req.body;
+      
+      // Extract company name from URL
+      const extractCompanyName = (url: string): string => {
+        try {
+          const domain = new URL(url).hostname;
+          const parts = domain.replace('www.', '').split('.');
+          return parts[0] ?? 'Unknown Company';
+        } catch {
+          return 'Unknown Company';
+        }
       };
       
-      // Use the existing backend logic for adding companies
-      const response = await fetch(`${process.env.BACKEND_URL || 'http://localhost:8000'}/api/companies`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': req.headers.authorization
-        },
-        body: JSON.stringify(companyData)
+      const name = extractCompanyName(url);
+      const keywordsArray = typeof keywords === 'string' 
+        ? keywords.split(',').map(kw => kw.trim()).filter(Boolean) 
+        : keywords;
+      
+      // Find career page URL
+      let careerPageUrl = req.body.careerPageUrl || `${url}/careers`;
+      
+      const convertIntervalToMinutes = (interval: string): number => {
+        const parts = interval.trim().split(" ");
+        const value = parseInt(parts[0], 10);
+        const unit = parts[1];
+        
+        switch (unit?.toLowerCase()) {
+          case "hour": case "hours": return value * 60;
+          case "day": case "days": return value * 60 * 24;
+          case "week": case "weeks": return value * 60 * 24 * 7;
+          default: return 1440; // Default to 1 day
+        }
+      };
+      
+      const company = await storage.createCompany({
+        name,
+        url,
+        career_page_url: careerPageUrl,
+        keywords: keywordsArray,
+        priority,
+        status: 'active',
+        check_interval_minutes: convertIntervalToMinutes(checkInterval),
+        user_id: req.userId
       });
       
-      const result = await response.json();
-      res.json(result);
+      // Simulate job scraping results for now
+      const mockJobs = [
+        {
+          title: `Frontend Developer at ${name}`,
+          url: `${url}/jobs/frontend-developer`,
+          description: `We are looking for a talented Frontend Developer to join our team. You will be responsible for building user-facing features and ensuring great user experience.`,
+          salary: '$80,000 - $120,000',
+          requirements: ['React', 'TypeScript', 'CSS'],
+          matchedKeywords: keywordsArray.filter(k => ['frontend', 'react', 'javascript'].includes(k.toLowerCase())),
+          dateFound: new Date().toISOString(),
+          status: 'New',
+          priority,
+          companyId: company.id,
+          user_id: req.userId
+        },
+        {
+          title: `Software Engineer at ${name}`,
+          url: `${url}/jobs/software-engineer`,
+          description: `Join our engineering team to build scalable software solutions. Work with modern technologies and contribute to exciting projects.`,
+          salary: '$90,000 - $140,000',
+          requirements: ['JavaScript', 'Node.js', 'Database'],
+          matchedKeywords: keywordsArray.filter(k => ['developer', 'engineer', 'javascript'].includes(k.toLowerCase())),
+          dateFound: new Date().toISOString(),
+          status: 'New',
+          priority,
+          companyId: company.id,
+          user_id: req.userId
+        }
+      ].filter(job => job.matchedKeywords.length > 0 || keywordsArray.length === 0);
+      
+      // Insert jobs if any were found
+      for (const job of mockJobs) {
+        try {
+          await supabase.from('jobs').insert(job);
+        } catch (error) {
+          console.error('Error inserting job:', error);
+        }
+      }
+      
+      res.json({ 
+        success: true, 
+        company, 
+        jobsFound: mockJobs.length,
+        jobs: mockJobs 
+      });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

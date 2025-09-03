@@ -64,13 +64,13 @@ export function JobCard({ job, onClick, variant = 'default' }: JobCardProps) {
 
   return (
     <Card 
-      className="cursor-pointer hover:bg-accent transition-colors"
+      className="cursor-pointer hover:bg-accent transition-all duration-200 hover:shadow-md"
       onClick={onClick}
       data-testid={`card-job-${job.id}`}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-medium text-foreground">{job.title}</h3>
+          <h3 className="font-medium text-foreground line-clamp-2 flex-1 mr-2">{job.title}</h3>
           <Badge className={`text-xs ${getStatusColor(job.status)}`}>
             {job.status}
           </Badge>
@@ -79,6 +79,11 @@ export function JobCard({ job, onClick, variant = 'default' }: JobCardProps) {
           {job.companyName} {job.salary && `• ${job.salary}`}
         </p>
         <p className="text-xs text-muted-foreground mb-3">{formatDate(job.dateFound)}</p>
+        {job.description && (
+          <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
+            {job.description.substring(0, 100)}...
+          </p>
+        )}
         {job.matchedKeywords && job.matchedKeywords.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {job.matchedKeywords.map((keyword, index) => (

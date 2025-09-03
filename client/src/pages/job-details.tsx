@@ -162,8 +162,8 @@ export default function JobDetails() {
             {job.description && (
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Job Description</h3>
-                <div className="text-muted-foreground space-y-2" data-testid="text-description">
-                  <p>{job.description}</p>
+                <div className="text-muted-foreground space-y-2 max-h-64 overflow-y-auto" data-testid="text-description">
+                  <div className="whitespace-pre-wrap">{job.description}</div>
                 </div>
               </div>
             )}
@@ -171,9 +171,9 @@ export default function JobDetails() {
             {job.requirements && job.requirements.length > 0 && (
               <div>
                 <h3 className="font-semibold text-foreground mb-2">Requirements</h3>
-                <ul className="text-muted-foreground space-y-1">
+                <ul className="text-muted-foreground space-y-1 list-disc list-inside">
                   {job.requirements.map((req, index) => (
-                    <li key={index}>• {req}</li>
+                    <li key={index}>{req}</li>
                   ))}
                 </ul>
               </div>

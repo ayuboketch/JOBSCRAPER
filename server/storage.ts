@@ -75,7 +75,16 @@ export class SupabaseStorage implements IStorage {
   async createCompany(company: any): Promise<Company> {
     const { data, error } = await supabase
       .from('companies')
-      .insert(company)
+      .insert({
+        name: company.name,
+        url: company.url,
+        career_page_url: company.career_page_url,
+        keywords: company.keywords,
+        priority: company.priority || 'medium',
+        status: company.status || 'active',
+        check_interval_minutes: company.check_interval_minutes || 1440,
+        user_id: company.user_id
+      })
       .select()
       .single();
     

@@ -44,6 +44,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user);
     localStorage.setItem('supabase_token', session.access_token);
     localStorage.setItem('user_data', JSON.stringify(user));
+    // Force navigation to dashboard
+    window.location.hash = '';
     setLocation('/dashboard');
   };
 
@@ -52,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user);
     localStorage.setItem('supabase_token', session.access_token);
     localStorage.setItem('user_data', JSON.stringify(user));
+    // Force navigation to dashboard
+    window.location.hash = '';
     setLocation('/dashboard');
   };
 
