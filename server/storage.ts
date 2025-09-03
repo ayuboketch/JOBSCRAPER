@@ -1,6 +1,9 @@
+import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import type { User, InsertUser, Company, Job } from "@shared/schema";
 import { Database } from '../types/database';
+
+dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;

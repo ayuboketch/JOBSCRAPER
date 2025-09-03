@@ -31,7 +31,7 @@ function AuthenticatedApp() {
   
   // Update active tab based on current location
   useEffect(() => {
-    if (location === '/' || location.startsWith('/job/') || location.startsWith('/add-company') || location.startsWith('/companies')) {
+    if (location === '/dashboard') {
       setActiveTab('dashboard');
     } else if (location.startsWith('/jobs')) {
       setActiveTab('jobs');
@@ -70,7 +70,7 @@ function AuthenticatedApp() {
   const handleTabChange = (tab: 'dashboard' | 'jobs' | 'settings') => {
     switch (tab) {
       case 'dashboard':
-        setLocation('/');
+        setLocation('/dashboard');
         break;
       case 'jobs':
         setLocation('/jobs');
@@ -85,7 +85,7 @@ function AuthenticatedApp() {
     <div className="min-h-screen flex flex-col bg-background">
       <TopNavigation 
         onMenuClick={() => setIsDrawerOpen(true)}
-        onLogoClick={() => setLocation('/')}
+        onLogoClick={() => setLocation('/dashboard')}
       />
       
       <SideDrawer
@@ -96,7 +96,10 @@ function AuthenticatedApp() {
       
       <main className="flex-1 overflow-y-auto">
         <Switch>
-          <Route path="/" component={Dashboard} />
+          <Route path="/">
+            <Redirect to="/dashboard" />
+          </Route>
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/add-company" component={AddCompany} />
           <Route path="/job/:id" component={JobDetails} />
           <Route path="/jobs" component={JobsList} />
