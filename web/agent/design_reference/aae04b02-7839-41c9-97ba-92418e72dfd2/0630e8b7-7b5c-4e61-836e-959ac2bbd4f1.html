@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobTracker - Job Notification App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)",
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                    chart: {
+                        "1": "var(--chart-1)",
+                        "2": "var(--chart-2)",
+                        "3": "var(--chart-3)",
+                        "4": "var(--chart-4)",
+                        "5": "var(--chart-5)",
+                    }
+                },
+                fontFamily: {
+                    sans: ["var(--font-sans)"],
+                    serif: ["var(--font-serif)"],
+                    mono: ["var(--font-mono)"],
+                }
+            },
+        }
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --background: hsl(0 0% 100%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(221.2 83.2% 53.3%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(210 40% 96%);
+            --secondary-foreground: hsl(222.2 84% 4.9%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(210 40% 96%);
+            --accent-foreground: hsl(222.2 84% 4.9%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(221.2 83.2% 53.3%);
+            --radius: 0.5rem;
+            --font-sans: 'Inter', system-ui, sans-serif;
+        }
+        
+        .dark {
+            --background: hsl(222.2 84% 4.9%);
+            --foreground: hsl(210 40% 98%);
+            --card: hsl(222.2 84% 4.9%);
+            --card-foreground: hsl(210 40% 98%);
+            --popover: hsl(222.2 84% 4.9%);
+            --popover-foreground: hsl(210 40% 98%);
+            --primary: hsl(217.2 91.2% 59.8%);
+            --primary-foreground: hsl(222.2 84% 4.9%);
+            --secondary: hsl(217.2 32.6% 17.5%);
+            --secondary-foreground: hsl(210 40% 98%);
+            --muted: hsl(217.2 32.6% 17.5%);
+            --muted-foreground: hsl(215 20.2% 65.1%);
+            --accent: hsl(217.2 32.6% 17.5%);
+            --accent-foreground: hsl(210 40% 98%);
+            --destructive: hsl(0 62.8% 30.6%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(217.2 32.6% 17.5%);
+            --input: hsl(217.2 32.6% 17.5%);
+            --ring: hsl(224.3 76.3% 94.1%);
+        }
+        
+        * {
+            border-color: var(--border);
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--foreground);
+            font-family: var(--font-sans);
+        }
+        
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        
+        @keyframes slideInFromLeft {
+            from {
+                transform: translateX(-100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+        
+        .slide-in-left {
+            animation: slideInFromLeft 0.3s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .status-indicator {
+            position: relative;
+        }
+        
+        .status-indicator::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.3;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.3;
+            }
+            70% {
+                transform: translate(-50%, -50%) scale(1.4);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-background text-foreground">
+    <!-- @COMPONENT: AppContainer [Main application wrapper] -->
+    <div id="app" class="min-h-screen flex flex-col">
+        
+        <!-- Login Screen -->
+        <!-- @COMPONENT: LoginScreen [User authentication screen] -->
+        <div id="loginScreen" class="flex-1 flex items-center justify-center p-4">
+            <div class="w-full max-w-md space-y-8">
+                <!-- Logo/Brand -->
+                <div class="text-center">
+                    <div class="mx-auto h-16 w-16 bg-primary rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-briefcase text-2xl text-primary-foreground"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-foreground">JobTracker</h1>
+                    <p class="text-muted-foreground">Track your dream jobs effortlessly</p>
+                </div>
+                
+                <!-- Login Form -->
+                <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-1">Email</label>
+                            <input 
+                                type="email" 
+                                class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Enter your email"
+                                data-mock="true"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-1">Password</label>
+                            <input 
+                                type="password" 
+                                class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Enter your password"
+                                data-mock="true"
+                            >
+                        </div>
+                        <button 
+                            onclick="showDashboard()"
+                            class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors font-medium"
+                            data-event="click:handleLogin"
+                        >
+                            Sign In
+                        </button>
+                        <div class="text-center">
+                            <button 
+                                onclick="showSignup()"
+                                class="text-primary hover:text-primary/80 text-sm"
+                                data-event="click:showSignup"
+                            >
+                                Don't have an account? Sign up
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: LoginScreen -->
+        
+        <!-- Signup Screen -->
+        <!-- @COMPONENT: SignupScreen [User registration screen] -->
+        <div id="signupScreen" class="hidden flex-1 flex items-center justify-center p-4">
+            <div class="w-full max-w-md space-y-8">
+                <!-- Logo/Brand -->
+                <div class="text-center">
+                    <div class="mx-auto h-16 w-16 bg-primary rounded-lg flex items-center justify-center mb-4">
+                        <i class="fas fa-briefcase text-2xl text-primary-foreground"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-foreground">Create Account</h1>
+                    <p class="text-muted-foreground">Start tracking your job opportunities</p>
+                </div>
+                
+                <!-- Signup Form -->
+                <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-1">Full Name</label>
+                            <input 
+                                type="text" 
+                                class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Enter your full name"
+                                data-mock="true"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-1">Email</label>
+                            <input 
+                                type="email" 
+                                class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Enter your email"
+                                data-mock="true"
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-foreground mb-1">Password</label>
+                            <input 
+                                type="password" 
+                                class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                placeholder="Create a password"
+                                data-mock="true"
+                            >
+                        </div>
+                        <button 
+                            onclick="showDashboard()"
+                            class="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary/90 transition-colors font-medium"
+                            data-event="click:handleSignup"
+                        >
+                            Create Account
+                        </button>
+                        <div class="text-center">
+                            <button 
+                                onclick="showLogin()"
+                                class="text-primary hover:text-primary/80 text-sm"
+                                data-event="click:showLogin"
+                            >
+                                Already have an account? Sign in
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: SignupScreen -->
+        
+        <!-- Main App Container -->
+        <!-- @COMPONENT: MainApp [Authenticated app container] -->
+        <div id="mainApp" class="hidden flex-1 flex flex-col">
+            
+            <!-- Top Navigation -->
+            <!-- @COMPONENT: TopNavigation [Header with drawer and logo] -->
+            <header class="bg-card border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-40">
+                <button 
+                    onclick="toggleDrawer()"
+                    class="p-2 hover:bg-accent rounded-md transition-colors"
+                    data-event="click:toggleDrawer"
+                >
+                    <i class="fas fa-bars text-lg"></i>
+                </button>
+                
+                <button 
+                    onclick="showDashboard()"
+                    class="flex items-center space-x-2"
+                    data-event="click:goToDashboard"
+                >
+                    <div class="h-8 w-8 bg-primary rounded-md flex items-center justify-center">
+                        <i class="fas fa-briefcase text-primary-foreground"></i>
+                    </div>
+                    <span class="font-semibold text-foreground">JobTracker</span>
+                </button>
+                
+                <div class="w-10"></div> <!-- Spacer for centering -->
+            </header>
+            <!-- @END_COMPONENT: TopNavigation -->
+            
+            <!-- Side Drawer Overlay -->
+            <!-- @COMPONENT: DrawerOverlay [Dark overlay for drawer] -->
+            <div 
+                id="drawerOverlay" 
+                class="fixed inset-0 bg-black/50 z-50 hidden"
+                onclick="closeDrawer()"
+                data-event="click:closeDrawer"
+            ></div>
+            <!-- @END_COMPONENT: DrawerOverlay -->
+            
+            <!-- Side Drawer -->
+            <!-- @COMPONENT: SideDrawer [Navigation drawer with user options] -->
+            <div id="sideDrawer" class="fixed top-0 left-0 h-full w-64 bg-card border-r border-border z-50 transform -translate-x-full transition-transform duration-300 ease-out">
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-semibold text-foreground">Menu</h2>
+                        <button 
+                            onclick="closeDrawer()"
+                            class="p-1 hover:bg-accent rounded"
+                            data-event="click:closeDrawer"
+                        >
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- User Profile Section -->
+                    <div class="flex items-center space-x-3 p-3 bg-muted rounded-lg mb-6">
+                        <div class="h-10 w-10 bg-primary rounded-full flex items-center justify-center">
+                            <span class="text-primary-foreground font-medium" data-bind="user.initials">JD</span>
+                        </div>
+                        <div>
+                            <p class="font-medium text-foreground" data-bind="user.name">John Doe</p>
+                            <p class="text-sm text-muted-foreground" data-bind="user.email">john@example.com</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Menu Items -->
+                    <nav class="space-y-2">
+                        <button 
+                            onclick="showAccount()"
+                            class="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-accent rounded-md transition-colors"
+                            data-event="click:showAccount"
+                        >
+                            <i class="fas fa-user w-4"></i>
+                            <span>Account</span>
+                        </button>
+                        <button 
+                            onclick="showSettings()"
+                            class="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-accent rounded-md transition-colors"
+                            data-event="click:showSettings"
+                        >
+                            <i class="fas fa-cog w-4"></i>
+                            <span>Settings</span>
+                        </button>
+                        <button 
+                            onclick="toggleTheme()"
+                            class="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-accent rounded-md transition-colors"
+                            data-event="click:toggleTheme"
+                        >
+                            <i class="fas fa-palette w-4"></i>
+                            <span>Change Theme</span>
+                        </button>
+                        <hr class="border-border my-4">
+                        <button 
+                            onclick="logout()"
+                            class="w-full flex items-center space-x-3 px-3 py-2 text-left hover:bg-destructive hover:text-destructive-foreground rounded-md transition-colors text-destructive"
+                            data-event="click:logout"
+                        >
+                            <i class="fas fa-sign-out-alt w-4"></i>
+                            <span>Log Out</span>
+                        </button>
+                    </nav>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: SideDrawer -->
+            
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto">
+                
+                <!-- Dashboard -->
+                <!-- @COMPONENT: Dashboard [Main dashboard view] -->
+                <div id="dashboardView" class="p-4 pb-20">
+                    <!-- Welcome Section -->
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-foreground mb-2">Welcome back, <span data-bind="user.firstName">John</span>!</h1>
+                        <p class="text-muted-foreground">Here's what's happening with your job search</p>
+                    </div>
+                    
+                    <!-- Add Company Button -->
+                    <div class="mb-8">
+                        <button 
+                            onclick="showAddCompany()"
+                            class="w-full bg-primary text-primary-foreground p-4 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center space-x-3 shadow-sm"
+                            data-event="click:showAddCompany"
+                        >
+                            <i class="fas fa-plus text-xl"></i>
+                            <span class="text-lg font-medium">Add Company</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div class="bg-card border border-border rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-primary" data-bind="stats.trackedCompanies">5</div>
+                            <div class="text-sm text-muted-foreground">Tracked Companies</div>
+                        </div>
+                        <div class="bg-card border border-border rounded-lg p-4 text-center">
+                            <div class="text-2xl font-bold text-chart-2" data-bind="stats.totalJobs">23</div>
+                            <div class="text-sm text-muted-foreground">Total Jobs Found</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dashboard Actions -->
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <button 
+                            onclick="showTrackedCompanies()"
+                            class="bg-card border border-border rounded-lg p-4 text-left hover:bg-accent transition-colors"
+                            data-event="click:showTrackedCompanies"
+                        >
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-building text-primary"></i>
+                                <span class="text-xs bg-primary text-primary-foreground px-2 py-1 rounded-full" data-bind="stats.trackedCompanies">5</span>
+                            </div>
+                            <h3 class="font-medium text-foreground">Tracked Companies</h3>
+                            <p class="text-sm text-muted-foreground">Manage your companies</p>
+                        </button>
+                        
+                        <button 
+                            onclick="showSearchedJobs()"
+                            class="bg-card border border-border rounded-lg p-4 text-left hover:bg-accent transition-colors"
+                            data-event="click:showSearchedJobs"
+                        >
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-search text-chart-2"></i>
+                                <span class="text-xs bg-chart-2 text-white px-2 py-1 rounded-full" data-bind="stats.searchedJobs">12</span>
+                            </div>
+                            <h3 class="font-medium text-foreground">Searched Jobs</h3>
+                            <p class="text-sm text-muted-foreground">Your keyword matches</p>
+                        </button>
+                        
+                        <button 
+                            onclick="showRecentJobs()"
+                            class="bg-card border border-border rounded-lg p-4 text-left hover:bg-accent transition-colors"
+                            data-event="click:showRecentJobs"
+                        >
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-clock text-chart-3"></i>
+                                <span class="text-xs bg-chart-3 text-white px-2 py-1 rounded-full" data-bind="stats.recentJobs">8</span>
+                            </div>
+                            <h3 class="font-medium text-foreground">Recent Jobs</h3>
+                            <p class="text-sm text-muted-foreground">Latest discoveries</p>
+                        </button>
+                        
+                        <button 
+                            onclick="showAppliedJobs()"
+                            class="bg-card border border-border rounded-lg p-4 text-left hover:bg-accent transition-colors"
+                            data-event="click:showAppliedJobs"
+                        >
+                            <div class="flex items-center justify-between mb-2">
+                                <i class="fas fa-check text-chart-4"></i>
+                                <span class="text-xs bg-chart-4 text-white px-2 py-1 rounded-full" data-bind="stats.appliedJobs">3</span>
+                            </div>
+                            <h3 class="font-medium text-foreground">Applied Jobs</h3>
+                            <p class="text-sm text-muted-foreground">Track applications</p>
+                        </button>
+                    </div>
+                    
+                    <!-- Recent Jobs Scrollable List -->
+                    <div class="mb-8">
+                        <h2 class="text-lg font-semibold text-foreground mb-4">Recent Jobs</h2>
+                        <div class="overflow-x-auto">
+                            <div class="flex space-x-4 pb-4" style="width: max-content;">
+                                <!-- @MAP: recentJobs.map(job => ( -->
+                                <div 
+                                    onclick="showJobDetails('job1')"
+                                    class="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent transition-colors flex-shrink-0"
+                                    style="width: 280px;"
+                                    data-event="click:showJobDetails"
+                                >
+                                    <div class="flex items-start justify-between mb-2">
+                                        <h3 class="font-medium text-foreground line-clamp-2">Frontend Developer</h3>
+                                        <span class="text-xs bg-chart-1 text-white px-2 py-1 rounded-full ml-2">New</span>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground mb-2">Tech Corp</p>
+                                    <p class="text-xs text-muted-foreground">Found 2 hours ago</p>
+                                    <div class="flex flex-wrap gap-1 mt-2">
+                                        <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">React</span>
+                                        <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">JavaScript</span>
+                                    </div>
+                                </div>
+                                
+                                <div 
+                                    onclick="showJobDetails('job2')"
+                                    class="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent transition-colors flex-shrink-0"
+                                    style="width: 280px;"
+                                    data-event="click:showJobDetails"
+                                >
+                                    <div class="flex items-start justify-between mb-2">
+                                        <h3 class="font-medium text-foreground line-clamp-2">Backend Engineer</h3>
+                                        <span class="text-xs bg-chart-2 text-white px-2 py-1 rounded-full ml-2">Match</span>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground mb-2">StartupCo</p>
+                                    <p class="text-xs text-muted-foreground">Found 5 hours ago</p>
+                                    <div class="flex flex-wrap gap-1 mt-2">
+                                        <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">Node.js</span>
+                                        <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">Python</span>
+                                    </div>
+                                </div>
+                                
+                                <div 
+                                    onclick="showJobDetails('job3')"
+                                    class="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent transition-colors flex-shrink-0"
+                                    style="width: 280px;"
+                                    data-event="click:showJobDetails"
+                                >
+                                    <div class="flex items-start justify-between mb-2">
+                                        <h3 class="font-medium text-foreground line-clamp-2">Full Stack Developer</h3>
+                                        <span class="text-xs bg-chart-3 text-white px-2 py-1 rounded-full ml-2">New</span>
+                                    </div>
+                                    <p class="text-sm text-muted-foreground mb-2">BigCorp</p>
+                                    <p class="text-xs text-muted-foreground">Found 1 day ago</p>
+                                    <div class="flex flex-wrap gap-1 mt-2">
+                                        <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">Vue.js</span>
+                                        <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">Laravel</span>
+                                    </div>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: Dashboard -->
+                
+                <!-- Add Company Modal/View -->
+                <!-- @COMPONENT: AddCompanyView [Add company form with status] -->
+                <div id="addCompanyView" class="hidden p-4 pb-20">
+                    <div class="flex items-center mb-6">
+                        <button 
+                            onclick="showDashboard()"
+                            class="p-2 hover:bg-accent rounded-md transition-colors mr-3"
+                            data-event="click:goBack"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h1 class="text-xl font-bold text-foreground">Add Company</h1>
+                    </div>
+                    
+                    <div class="bg-card border border-border rounded-lg p-6 mb-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-1">Company Career Page URL</label>
+                                <input 
+                                    type="url" 
+                                    class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                    placeholder="https://company.com/careers"
+                                    data-mock="true"
+                                    data-bind="form.companyUrl"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-1">Keywords (comma separated)</label>
+                                <input 
+                                    type="text" 
+                                    class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+                                    placeholder="frontend, developer, react, javascript"
+                                    data-mock="true"
+                                    data-bind="form.keywords"
+                                >
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-foreground mb-1">Check Interval</label>
+                                <select class="w-full px-3 py-2 bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring" data-bind="form.interval">
+                                    <option value="1 hour">Every Hour</option>
+                                    <option value="6 hours">Every 6 Hours</option>
+                                    <option value="12 hours">Every 12 Hours</option>
+                                    <option value="1 day" selected>Daily</option>
+                                    <option value="3 days">Every 3 Days</option>
+                                    <option value="1 week">Weekly</option>
+                                </select>
+                            </div>
+                            
+                            <button 
+                                onclick="startJobScraping()"
+                                class="w-full bg-primary text-primary-foreground py-3 px-4 rounded-md hover:bg-primary/90 transition-colors font-medium"
+                                data-event="click:startScraping"
+                                data-implementation="Should validate form and start scraping process"
+                            >
+                                Start Tracking
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress/Status Section -->
+                    <!-- @STATE: isScrapingActive:boolean = false -->
+                    <div id="scrapingStatus" class="hidden bg-card border border-border rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-foreground mb-4">Tracking Progress</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                                    <i class="fas fa-check text-primary-foreground text-xs"></i>
+                                </div>
+                                <span class="text-foreground">Validating URL</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 rounded-full bg-primary flex items-center justify-center status-indicator">
+                                    <div class="w-2 h-2 bg-primary-foreground rounded-full animate-pulse"></div>
+                                </div>
+                                <span class="text-foreground">Scraping job listings</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                                    <div class="w-2 h-2 bg-muted-foreground rounded-full"></div>
+                                </div>
+                                <span class="text-muted-foreground">Processing results</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                                    <div class="w-2 h-2 bg-muted-foreground rounded-full"></div>
+                                </div>
+                                <span class="text-muted-foreground">Saving to database</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 p-4 bg-muted rounded-lg">
+                            <p class="text-sm text-muted-foreground">Found <span class="font-medium text-foreground" data-bind="scraping.jobsFound">0</span> jobs so far...</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: AddCompanyView -->
+                
+                <!-- Job Details View -->
+                <!-- @COMPONENT: JobDetailsView [Individual job details] -->
+                <div id="jobDetailsView" class="hidden p-4 pb-20">
+                    <div class="flex items-center mb-6">
+                        <button 
+                            onclick="goBack()"
+                            class="p-2 hover:bg-accent rounded-md transition-colors mr-3"
+                            data-event="click:goBack"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h1 class="text-xl font-bold text-foreground">Job Details</h1>
+                    </div>
+                    
+                    <div class="bg-card border border-border rounded-lg p-6 mb-6">
+                        <!-- Job Header -->
+                        <div class="mb-6">
+                            <h2 class="text-2xl font-bold text-foreground mb-2" data-bind="job.title">Frontend Developer</h2>
+                            <div class="flex items-center space-x-4 text-muted-foreground mb-4">
+                                <span data-bind="job.company">Tech Corp</span>
+                                <span>•</span>
+                                <span data-bind="job.dateFound">Found 2 hours ago</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">React</span>
+                                <span class="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">JavaScript</span>
+                                <span class="text-xs bg-accent text-accent-foreground px-2 py-1 rounded">TypeScript</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Job Details -->
+                        <div class="space-y-4 mb-6">
+                            <div>
+                                <h3 class="font-semibold text-foreground mb-2">Salary</h3>
+                                <p class="text-muted-foreground" data-bind="job.salary">$80,000 - $120,000 per year</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-semibold text-foreground mb-2">Application Deadline</h3>
+                                <p class="text-muted-foreground" data-bind="job.deadline">March 30, 2024</p>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-semibold text-foreground mb-2">Job Description</h3>
+                                <div class="text-muted-foreground space-y-2" data-bind="job.description">
+                                    <p>We are looking for a skilled Frontend Developer to join our team. You will be responsible for building user-facing features using modern web technologies.</p>
+                                    <p>Key responsibilities include developing responsive web applications, collaborating with designers and backend developers, and ensuring optimal user experience.</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="font-semibold text-foreground mb-2">Requirements</h3>
+                                <ul class="text-muted-foreground space-y-1">
+                                    <li>• 3+ years experience with React</li>
+                                    <li>• Strong knowledge of JavaScript/TypeScript</li>
+                                    <li>• Experience with modern CSS frameworks</li>
+                                    <li>• Familiarity with Git and CI/CD processes</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex flex-col space-y-3">
+                            <button 
+                                onclick="applyToJob()"
+                                class="w-full bg-primary text-primary-foreground py-3 px-4 rounded-md hover:bg-primary/90 transition-colors font-medium"
+                                data-event="click:applyToJob"
+                                data-implementation="Should open external job URL"
+                            >
+                                <i class="fas fa-external-link-alt mr-2"></i>
+                                Apply for Job
+                            </button>
+                            
+                            <button 
+                                onclick="deleteJob()"
+                                class="w-full bg-destructive text-destructive-foreground py-3 px-4 rounded-md hover:bg-destructive/90 transition-colors font-medium"
+                                data-event="click:deleteJob"
+                                data-implementation="Should confirm deletion and remove job"
+                            >
+                                <i class="fas fa-trash mr-2"></i>
+                                Delete Job
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: JobDetailsView -->
+                
+                <!-- Jobs List View -->
+                <!-- @COMPONENT: JobsListView [List of all jobs] -->
+                <div id="jobsListView" class="hidden p-4 pb-20">
+                    <div class="flex items-center mb-6">
+                        <button 
+                            onclick="showDashboard()"
+                            class="p-2 hover:bg-accent rounded-md transition-colors mr-3"
+                            data-event="click:goBack"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h1 class="text-xl font-bold text-foreground">All Jobs</h1>
+                    </div>
+                    
+                    <!-- Filter Tabs -->
+                    <div class="flex space-x-1 mb-6 bg-muted p-1 rounded-lg">
+                        <button 
+                            onclick="filterJobs('all')"
+                            class="flex-1 py-2 px-4 rounded-md bg-background text-foreground font-medium transition-colors"
+                            data-event="click:filterJobs"
+                        >
+                            All Jobs
+                        </button>
+                        <button 
+                            onclick="filterJobs('searched')"
+                            class="flex-1 py-2 px-4 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                            data-event="click:filterJobs"
+                        >
+                            Searched
+                        </button>
+                        <button 
+                            onclick="filterJobs('applied')"
+                            class="flex-1 py-2 px-4 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+                            data-event="click:filterJobs"
+                        >
+                            Applied
+                        </button>
+                    </div>
+                    
+                    <!-- Jobs List -->
+                    <div class="space-y-4">
+                        <!-- @MAP: jobs.map(job => ( -->
+                        <div 
+                            onclick="showJobDetails('job1')"
+                            class="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent transition-colors"
+                            data-event="click:showJobDetails"
+                        >
+                            <div class="flex items-start justify-between mb-2">
+                                <h3 class="font-medium text-foreground">Frontend Developer</h3>
+                                <span class="text-xs bg-chart-1 text-white px-2 py-1 rounded-full">New</span>
+                            </div>
+                            <p class="text-sm text-muted-foreground mb-2">Tech Corp • $80k-120k</p>
+                            <p class="text-xs text-muted-foreground mb-3">Found 2 hours ago</p>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">React</span>
+                                <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">JavaScript</span>
+                            </div>
+                        </div>
+                        
+                        <div 
+                            onclick="showJobDetails('job2')"
+                            class="bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent transition-colors"
+                            data-event="click:showJobDetails"
+                        >
+                            <div class="flex items-start justify-between mb-2">
+                                <h3 class="font-medium text-foreground">Backend Engineer</h3>
+                                <span class="text-xs bg-chart-2 text-white px-2 py-1 rounded-full">Match</span>
+                            </div>
+                            <p class="text-sm text-muted-foreground mb-2">StartupCo • $90k-130k</p>
+                            <p class="text-xs text-muted-foreground mb-3">Found 5 hours ago</p>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">Node.js</span>
+                                <span class="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">Python</span>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: JobsListView -->
+                
+                <!-- Tracked Companies View -->
+                <!-- @COMPONENT: TrackedCompaniesView [List of tracked companies] -->
+                <div id="trackedCompaniesView" class="hidden p-4 pb-20">
+                    <div class="flex items-center mb-6">
+                        <button 
+                            onclick="showDashboard()"
+                            class="p-2 hover:bg-accent rounded-md transition-colors mr-3"
+                            data-event="click:goBack"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h1 class="text-xl font-bold text-foreground">Tracked Companies</h1>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <!-- @MAP: companies.map(company => ( -->
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-foreground mb-1">Tech Corp</h3>
+                                    <p class="text-sm text-muted-foreground mb-2">https://techcorp.com/careers</p>
+                                    <div class="flex items-center space-x-4 text-xs text-muted-foreground mb-3">
+                                        <span>Keywords: frontend, developer, react</span>
+                                        <span>•</span>
+                                        <span>Check: Daily</span>
+                                    </div>
+                                    <div class="flex items-center space-x-4 text-xs">
+                                        <span class="text-chart-2">5 jobs found</span>
+                                        <span class="text-muted-foreground">Last checked: 2 hours ago</span>
+                                    </div>
+                                </div>
+                                <button 
+                                    onclick="deleteCompany('company1')"
+                                    class="p-2 text-destructive hover:bg-destructive hover:text-destructive-foreground rounded-md transition-colors"
+                                    data-event="click:deleteCompany"
+                                    data-implementation="Should confirm and delete company with all associated jobs"
+                                >
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="font-medium text-foreground mb-1">StartupCo</h3>
+                                    <p class="text-sm text-muted-foreground mb-2">https://startupco.com/jobs</p>
+                                    <div class="flex items-center space-x-4 text-xs text-muted-foreground mb-3">
+                                        <span>Keywords: backend, python, django</span>
+                                        <span>•</span>
+                                        <span>Check: Every 6 hours</span>
+                                    </div>
+                                    <div class="flex items-center space-x-4 text-xs">
+                                        <span class="text-chart-2">3 jobs found</span>
+                                        <span class="text-muted-foreground">Last checked: 1 hour ago</span>
+                                    </div>
+                                </div>
+                                <button 
+                                    onclick="deleteCompany('company2')"
+                                    class="p-2 text-destructive hover:bg-destructive hover:text-destructive-foreground rounded-md transition-colors"
+                                    data-event="click:deleteCompany"
+                                >
+                                    <i class="fas fa-trash text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: TrackedCompaniesView -->
+                
+                <!-- Settings View -->
+                <!-- @COMPONENT: SettingsView [App settings] -->
+                <div id="settingsView" class="hidden p-4 pb-20">
+                    <div class="flex items-center mb-6">
+                        <button 
+                            onclick="showDashboard()"
+                            class="p-2 hover:bg-accent rounded-md transition-colors mr-3"
+                            data-event="click:goBack"
+                        >
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <h1 class="text-xl font-bold text-foreground">Settings</h1>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Notifications -->
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <h3 class="font-medium text-foreground mb-4">Notifications</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-foreground">Email notifications</span>
+                                    <input type="checkbox" class="toggle" checked data-bind="settings.emailNotifications">
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-foreground">Push notifications</span>
+                                    <input type="checkbox" class="toggle" data-bind="settings.pushNotifications">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Theme -->
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <h3 class="font-medium text-foreground mb-4">Appearance</h3>
+                            <div class="space-y-3">
+                                <button 
+                                    onclick="setTheme('light')"
+                                    class="w-full flex items-center justify-between p-3 border border-border rounded-md hover:bg-accent transition-colors"
+                                    data-event="click:setTheme"
+                                >
+                                    <span>Light Mode</span>
+                                    <i class="fas fa-sun"></i>
+                                </button>
+                                <button 
+                                    onclick="setTheme('dark')"
+                                    class="w-full flex items-center justify-between p-3 border border-border rounded-md hover:bg-accent transition-colors"
+                                    data-event="click:setTheme"
+                                >
+                                    <span>Dark Mode</span>
+                                    <i class="fas fa-moon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Account -->
+                        <div class="bg-card border border-border rounded-lg p-4">
+                            <h3 class="font-medium text-foreground mb-4">Account</h3>
+                            <div class="space-y-3">
+                                <button 
+                                    onclick="changePassword()"
+                                    class="w-full text-left p-3 border border-border rounded-md hover:bg-accent transition-colors"
+                                    data-event="click:changePassword"
+                                >
+                                    Change Password
+                                </button>
+                                <button 
+                                    onclick="exportData()"
+                                    class="w-full text-left p-3 border border-border rounded-md hover:bg-accent transition-colors"
+                                    data-event="click:exportData"
+                                >
+                                    Export Data
+                                </button>
+                                <button 
+                                    onclick="deleteAccount()"
+                                    class="w-full text-left p-3 border border-destructive text-destructive rounded-md hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                                    data-event="click:deleteAccount"
+                                >
+                                    Delete Account
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: SettingsView -->
+                
+            </main>
+            
+            <!-- Bottom Navigation -->
+            <!-- @COMPONENT: BottomNavigation [Tab bar navigation] -->
+            <nav class="bg-card border-t border-border px-4 py-2 fixed bottom-0 left-0 right-0 z-30">
+                <div class="flex justify-around">
+                    <button 
+                        onclick="showDashboard()"
+                        class="flex flex-col items-center py-2 px-4 text-primary"
+                        data-event="click:goToDashboard"
+                    >
+                        <i class="fas fa-home text-lg mb-1"></i>
+                        <span class="text-xs font-medium">Dashboard</span>
+                    </button>
+                    <button 
+                        onclick="showJobsList()"
+                        class="flex flex-col items-center py-2 px-4 text-muted-foreground"
+                        data-event="click:showAllJobs"
+                    >
+                        <i class="fas fa-briefcase text-lg mb-1"></i>
+                        <span class="text-xs">Jobs</span>
+                    </button>
+                    <button 
+                        onclick="showSettings()"
+                        class="flex flex-col items-center py-2 px-4 text-muted-foreground"
+                        data-event="click:showSettings"
+                    >
+                        <i class="fas fa-cog text-lg mb-1"></i>
+                        <span class="text-xs">Settings</span>
+                    </button>
+                </div>
+            </nav>
+            <!-- @END_COMPONENT: BottomNavigation -->
+            
+        </div>
+        <!-- @END_COMPONENT: MainApp -->
+        
+        <!-- Toast Notification -->
+        <!-- @COMPONENT: ToastNotification [Feedback notifications] -->
+        <div id="toast" class="fixed top-4 right-4 bg-card border border-border rounded-lg p-4 shadow-lg z-50 hidden transform translate-x-full transition-transform duration-300">
+            <div class="flex items-center space-x-2">
+                <i id="toastIcon" class="fas fa-check-circle text-chart-2"></i>
+                <span id="toastMessage" class="text-foreground">Action completed successfully</span>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: ToastNotification -->
+        
+    </div>
+    <!-- @END_COMPONENT: AppContainer -->
+    
+    <script>
+        (function() {
+            // TODO: Implement business logic, API calls, and state management
+            
+            // Application state
+            let currentView = 'login';
+            let currentUser = null;
+            let isDrawerOpen = false;
+            let isDarkMode = false;
+            
+            // Navigation functions
+            function showLogin() {
+                hideAllViews();
+                document.getElementById('loginScreen').classList.remove('hidden');
+                currentView = 'login';
+            }
+            
+            function showSignup() {
+                hideAllViews();
+                document.getElementById('signupScreen').classList.remove('hidden');
+                currentView = 'signup';
+            }
+            
+            function showDashboard() {
+                hideAllViews();
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('dashboardView').classList.remove('hidden');
+                currentView = 'dashboard';
+                updateBottomNavigation('dashboard');
+            }
+            
+            function showAddCompany() {
+                hideAllViews();
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('addCompanyView').classList.remove('hidden');
+                currentView = 'addCompany';
+            }
+            
+            function showJobDetails(jobId) {
+                hideAllViews();
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('jobDetailsView').classList.remove('hidden');
+                currentView = 'jobDetails';
+                // TODO: Load job details for jobId
+            }
+            
+            function showJobsList() {
+                hideAllViews();
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('jobsListView').classList.remove('hidden');
+                currentView = 'jobsList';
+                updateBottomNavigation('jobs');
+            }
+            
+            function showTrackedCompanies() {
+                hideAllViews();
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('trackedCompaniesView').classList.remove('hidden');
+                currentView = 'trackedCompanies';
+            }
+            
+            function showSearchedJobs() {
+                showJobsList();
+                filterJobs('searched');
+            }
+            
+            function showRecentJobs() {
+                showJobsList();
+                filterJobs('all');
+            }
+            
+            function showAppliedJobs() {
+                showJobsList();
+                filterJobs('applied');
+            }
+            
+            function showSettings() {
+                hideAllViews();
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('settingsView').classList.remove('hidden');
+                currentView = 'settings';
+                updateBottomNavigation('settings');
+            }
+            
+            function hideAllViews() {
+                const views = [
+                    'loginScreen', 'signupScreen', 'mainApp',
+                    'dashboardView', 'addCompanyView', 'jobDetailsView', 
+                    'jobsListView', 'trackedCompaniesView', 'settingsView'
+                ];
+                views.forEach(view => {
+                    const element = document.getElementById(view);
+                    if (element) element.classList.add('hidden');
+                });
+            }
+            
+            function updateBottomNavigation(activeTab) {
+                const tabs = document.querySelectorAll('nav button');
+                tabs.forEach(tab => {
+                    tab.classList.remove('text-primary');
+                    tab.classList.add('text-muted-foreground');
+                });
+                
+                if (activeTab === 'dashboard') {
+                    tabs[0].classList.remove('text-muted-foreground');
+                    tabs[0].classList.add('text-primary');
+                } else if (activeTab === 'jobs') {
+                    tabs[1].classList.remove('text-muted-foreground');
+                    tabs[1].classList.add('text-primary');
+                } else if (activeTab === 'settings') {
+                    tabs[2].classList.remove('text-muted-foreground');
+                    tabs[2].classList.add('text-primary');
+                }
+            }
+            
+            // Drawer functions
+            function toggleDrawer() {
+                isDrawerOpen ? closeDrawer() : openDrawer();
+            }
+            
+            function openDrawer() {
+                const drawer = document.getElementById('sideDrawer');
+                const overlay = document.getElementById('drawerOverlay');
+                
+                overlay.classList.remove('hidden');
+                drawer.classList.remove('-translate-x-full');
+                isDrawerOpen = true;
+            }
+            
+            function closeDrawer() {
+                const drawer = document.getElementById('sideDrawer');
+                const overlay = document.getElementById('drawerOverlay');
+                
+                drawer.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+                isDrawerOpen = false;
+            }
+            
+            function goBack() {
+                if (currentView !== 'dashboard') {
+                    showDashboard();
+                }
+            }
+            
+            // Job scraping functions
+            function startJobScraping() {
+                const statusElement = document.getElementById('scrapingStatus');
+                statusElement.classList.remove('hidden');
+                
+                // Simulate scraping progress
+                setTimeout(() => {
+                    showToast('Job scraping completed! Found 5 new jobs.', 'success');
+                    setTimeout(() => {
+                        showDashboard();
+                    }, 2000);
+                }, 5000);
+            }
+            
+            // Filter functions
+            function filterJobs(filter) {
+                const tabs = document.querySelectorAll('#jobsListView .flex button');
+                tabs.forEach(tab => {
+                    tab.classList.remove('bg-background', 'text-foreground', 'font-medium');
+                    tab.classList.add('text-muted-foreground');
+                });
+                
+                if (filter === 'all') {
+                    tabs[0].classList.add('bg-background', 'text-foreground', 'font-medium');
+                } else if (filter === 'searched') {
+                    tabs[1].classList.add('bg-background', 'text-foreground', 'font-medium');
+                } else if (filter === 'applied') {
+                    tabs[2].classList.add('bg-background', 'text-foreground', 'font-medium');
+                }
+                
+                // TODO: Filter job list based on selection
+            }
+            
+            // Theme functions
+            function toggleTheme() {
+                isDarkMode = !isDarkMode;
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+                showToast(`Switched to ${isDarkMode ? 'dark' : 'light'} mode`, 'info');
+            }
+            
+            function setTheme(theme) {
+                isDarkMode = theme === 'dark';
+                if (isDarkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+                showToast(`Theme changed to ${theme} mode`, 'info');
+            }
+            
+            // Action functions
+            function applyToJob() {
+                // TODO: Open job URL in new tab
+                showToast('Opening job application...', 'info');
+            }
+            
+            function deleteJob() {
+                if (confirm('Are you sure you want to delete this job?')) {
+                    showToast('Job deleted successfully', 'success');
+                    goBack();
+                }
+            }
+            
+            function deleteCompany(companyId) {
+                if (confirm('Are you sure you want to delete this company? This will also delete all associated jobs.')) {
+                    showToast('Company and all jobs deleted successfully', 'success');
+                    // TODO: Delete company and refresh list
+                }
+            }
+            
+            function logout() {
+                if (confirm('Are you sure you want to log out?')) {
+                    currentUser = null;
+                    showLogin();
+                    showToast('Logged out successfully', 'info');
+                }
+            }
+            
+            // Toast notification function
+            function showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                const icon = document.getElementById('toastIcon');
+                const messageElement = document.getElementById('toastMessage');
+                
+                messageElement.textContent = message;
+                
+                // Set icon based on type
+                if (type === 'success') {
+                    icon.className = 'fas fa-check-circle text-chart-2';
+                } else if (type === 'error') {
+                    icon.className = 'fas fa-exclamation-circle text-destructive';
+                } else if (type === 'info') {
+                    icon.className = 'fas fa-info-circle text-primary';
+                }
+                
+                toast.classList.remove('hidden', 'translate-x-full');
+                
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        toast.classList.add('hidden');
+                    }, 300);
+                }, 3000);
+            }
+            
+            // Make functions globally available
+            window.showLogin = showLogin;
+            window.showSignup = showSignup;
+            window.showDashboard = showDashboard;
+            window.showAddCompany = showAddCompany;
+            window.showJobDetails = showJobDetails;
+            window.showJobsList = showJobsList;
+            window.showTrackedCompanies = showTrackedCompanies;
+            window.showSearchedJobs = showSearchedJobs;
+            window.showRecentJobs = showRecentJobs;
+            window.showAppliedJobs = showAppliedJobs;
+            window.showSettings = showSettings;
+            window.toggleDrawer = toggleDrawer;
+            window.closeDrawer = closeDrawer;
+            window.openDrawer = openDrawer;
+            window.goBack = goBack;
+            window.startJobScraping = startJobScraping;
+            window.filterJobs = filterJobs;
+            window.toggleTheme = toggleTheme;
+            window.setTheme = setTheme;
+            window.applyToJob = applyToJob;
+            window.deleteJob = deleteJob;
+            window.deleteCompany = deleteCompany;
+            window.logout = logout;
+            window.showToast = showToast;
+            
+            // Initialize app
+            showLogin();
+        })();
+    </script>
+</body>
+</html>
