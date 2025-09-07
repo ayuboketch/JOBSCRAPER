@@ -119,7 +119,7 @@ function AuthenticatedApp() {
   );
 }
 
-function App() {
+export default function App() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker
@@ -127,7 +127,7 @@ function App() {
         .then(() => console.log("Service Worker registered successfully."))
         .catch(err => console.error("Service Worker registration failed:", err));
     }
-  }, []); // ✅ runs once on mount
+  }, []); 
 
   return (
     <QueryClientProvider client={queryClient}>
