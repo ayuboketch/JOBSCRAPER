@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertCompanySchema } from "@shared/schema";
+import { insertUserSchema, insertCompanySchema } from "../shared/schema";
 import { createClient } from '@supabase/supabase-js';
 import { z } from "zod";
 import bcrypt from 'bcrypt';
