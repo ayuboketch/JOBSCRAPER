@@ -148,19 +148,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       // Simulate job scraping results for now
-      const mockJobs = [
+      interface MockJob {
+        title: string;
+        url: string;
+        description: string;
+        salary: string;
+        requirements: string[];
+        matchedKeywords: string[];
+        dateFound: string;
+        status: string;
+        priority: any;
+        companyId: number;
+        user_id: string;
+      }
+
+      const mockJobs: MockJob[] = [
         {
           title: `Frontend Developer at ${name}`,
           url: `${url}/jobs/frontend-developer`,
           description: `We are looking for a talented Frontend Developer to join our team. You will be responsible for building user-facing features and ensuring great user experience.`,
           salary: '$80,000 - $120,000',
           requirements: ['React', 'TypeScript', 'CSS'],
-          matchedKeywords: keywordsArray.filter(k => ['frontend', 'react', 'javascript'].includes(k.toLowerCase())),
+          matchedKeywords: (keywordsArray as string[]).filter((k: string) => ['frontend', 'react', 'javascript'].includes(k.toLowerCase())),
           dateFound: new Date().toISOString(),
           status: 'New',
           priority,
-          companyId: company.id,
-          user_id: req.userId
+          companyId: company.id as number,
+          user_id: req.userId as string
         },
         {
           title: `Software Engineer at ${name}`,
@@ -168,14 +182,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           description: `Join our engineering team to build scalable software solutions. Work with modern technologies and contribute to exciting projects.`,
           salary: '$90,000 - $140,000',
           requirements: ['JavaScript', 'Node.js', 'Database'],
-          matchedKeywords: keywordsArray.filter(k => ['developer', 'engineer', 'javascript'].includes(k.toLowerCase())),
+          matchedKeywords: (keywordsArray as string[]).filter((k: string) => ['developer', 'engineer', 'javascript'].includes(k.toLowerCase())),
           dateFound: new Date().toISOString(),
           status: 'New',
           priority,
-          companyId: company.id,
-          user_id: req.userId
+          companyId: company.id as number,
+          user_id: req.userId as string
         }
-      ].filter(job => job.matchedKeywords.length > 0 || keywordsArray.length === 0);
+      ].filter((job: MockJob) => job.matchedKeywords.length > 0 || (keywordsArray as string[]).length === 0);
       
       // Insert jobs if any were found
       for (const job of mockJobs) {
