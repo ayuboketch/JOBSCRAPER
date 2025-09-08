@@ -1,6 +1,8 @@
+// Updated queryClient.ts
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+// Remove trailing slash to prevent double slashes
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "https://jobscraper-8et5.onrender.com").replace(/\/$/, '');
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -15,21 +17,23 @@ export async function apiRequest(
   data?: unknown | undefined
 ): Promise<Response> {
   const token = localStorage.getItem("supabase_token");
-  const headers: Record<string, string> = {};
-
-  if (data) {
-    headers["Content-Type"] = "application/json";
-  }
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  };
 
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
+
+  console.log('Making request to:', `${API_BASE_URL}${url}`);
+  console.log('With headers:', headers);
 
   const res = await fetch(`${API_BASE_URL}${url}`, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
+    mode: 'cors' // Explicitly set CORS mode
   });
 
   await throwIfResNotOk(res);
@@ -49,9 +53,13 @@ export const getQueryFn: <T>(options: {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
+    console.log('Query request to:', `${API_BASE_URL}/${queryKey.join("/")}`);
+    console.log('Query headers:', headers);
+
     const res = await fetch(`${API_BASE_URL}/${queryKey.join("/")}`, {
       headers,
       credentials: "include",
+      mode: 'cors'
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -66,9 +74,9 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: 30000, // Refetch every 30 seconds
+      refetchInterval: 30000,
       refetchOnWindowFocus: false,
-      staleTime: 25000, // Data is fresh for 25 seconds
+      staleTime: 25000,
       retry: 3,
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
