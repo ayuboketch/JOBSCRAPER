@@ -2,10 +2,37 @@ import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./viteServer";
+import cors from "cors"; 
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+const corsOptions = {
+  origin: [
+    'https://jobscraper-z5v4.onrender.com', 
+    'http://localhost:5173', 
+    'http://localhost:3000' 
+  ],
+  credentials: true, 
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use((req, res, next) => {
+  console.log(`\n=== Incoming Request ===`);
+  console.log(`${req.method} ${req.path}`);
+  console.log('Origin:', req.headers.origin);
+  console.log('Authorization:', req.headers.authorization ? 'Present' : 'Missing');
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Headers:', JSON.stringify(req.headers, null, 2));
+  console.log('========================\n');
+  next();
+});
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -47,20 +74,11 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     throw err;
   });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
-
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
   port,
@@ -69,3 +87,6 @@ app.use((req, res, next) => {
   log(`serving on http://localhost:${port}`);
 });
 })();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
