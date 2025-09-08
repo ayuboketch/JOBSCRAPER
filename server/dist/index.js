@@ -1,6 +1,7 @@
 // index.ts
 import "dotenv/config";
 import express2 from "express";
+import cors from "cors";
 
 // routes.ts
 import { createServer } from "http";
@@ -438,8 +439,44 @@ function serveStatic(app2) {
 
 // index.ts
 var app = express2();
-app.use(express2.json());
+var corsOptions = {
+  origin: [
+    "https://jobscraper-z5v4.onrender.com",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:5000"
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept",
+    "Origin"
+  ]
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+app.use(express2.json({ limit: "10mb" }));
 app.use(express2.urlencoded({ extended: false }));
+app.use((req, res, next) => {
+  console.log(`
+=== ${(/* @__PURE__ */ new Date()).toISOString()} ===`);
+  console.log(`${req.method} ${req.url}`);
+  console.log("Origin:", req.headers.origin);
+  console.log("User-Agent:", req.headers["user-agent"]?.substring(0, 50) + "...");
+  console.log("Authorization:", req.headers.authorization ? "Bearer ***" : "None");
+  console.log("Content-Type:", req.headers["content-type"] || "None");
+  const originalSend = res.send;
+  res.send = function(data) {
+    console.log(`Response: ${res.statusCode}`);
+    console.log("=================================\n");
+    return originalSend.call(this, data);
+  };
+  next();
+});
 app.use((req, res, next) => {
   const start = Date.now();
   const path2 = req.path;
@@ -453,36 +490,59 @@ app.use((req, res, next) => {
     const duration = Date.now() - start;
     if (path2.startsWith("/api")) {
       let logLine = `${req.method} ${path2} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
+      if (capturedJsonResponse && res.statusCode >= 400) {
         logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
       }
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "\u2026";
+      if (logLine.length > 120) {
+        logLine = logLine.slice(0, 119) + "\u2026";
       }
       log(logLine);
     }
   });
   next();
 });
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+    environment: process.env.NODE_ENV || "development"
+  });
+});
 (async () => {
-  const server = await registerRoutes(app);
-  app.use((err, _req, res, _next) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-    res.status(status).json({ message });
-    throw err;
-  });
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
+  try {
+    const server = await registerRoutes(app);
+    app.use((err, req, res, next) => {
+      console.error("Error occurred:", {
+        message: err.message,
+        stack: err.stack,
+        method: req.method,
+        url: req.url,
+        origin: req.headers.origin
+      });
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      res.status(status).json({
+        error: message,
+        ...process.env.NODE_ENV === "development" && { stack: err.stack }
+      });
+    });
+    app.use("/api/*", (req, res) => {
+      res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.path}` });
+    });
+    if (process.env.NODE_ENV === "development") {
+      await setupVite(app, server);
+    } else {
+      serveStatic(app);
+    }
+    const port = parseInt(process.env.PORT || "5000", 10);
+    server.listen(port, "0.0.0.0", () => {
+      log(`\u{1F680} Server running on http://0.0.0.0:${port}`);
+      log(`Environment: ${process.env.NODE_ENV || "development"}`);
+      log(`CORS enabled for origins: ${corsOptions.origin.join(", ")}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
   }
-  const port = parseInt(process.env.PORT || "5000", 10);
-  server.listen({
-    port,
-    host: "0.0.0.0"
-  }, () => {
-    log(`serving on http://localhost:${port}`);
-  });
 })();
 //# sourceMappingURL=index.js.map
